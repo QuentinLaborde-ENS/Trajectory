@@ -1,0 +1,1211 @@
+{
+  "status": "POST-HOC TEST OPTIMIZATION \u2014 NOT OFFICIAL",
+  "frozen_official": {
+    "model": "MDS4-Delta+OldPos-89D",
+    "dimension": 89,
+    "C": 10.0,
+    "gamma": 2.0,
+    "errors": 10,
+    "accuracy": 0.9930362116991643,
+    "macro_f1": 0.9927762114672577
+  },
+  "best_oracle": {
+    "model": "Events+Density-85D",
+    "dimension": 85,
+    "C": 100.0,
+    "gamma": 0.5,
+    "errors": 7,
+    "accuracy": 0.995125348189415,
+    "macro_f1": 0.9947880540522928
+  },
+  "all_results": [
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 0.5,
+      "errors": 7,
+      "accuracy": 0.995125348189415,
+      "macro_f1": 0.9947880540522928
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 100.0,
+      "gamma": 0.5,
+      "errors": 8,
+      "accuracy": 0.9944289693593314,
+      "macro_f1": 0.9941701496109439
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 10.0,
+      "gamma": 1.0,
+      "errors": 8,
+      "accuracy": 0.9944289693593314,
+      "macro_f1": 0.9941700519668993
+    },
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 0.5,
+      "errors": 8,
+      "accuracy": 0.9944289693593314,
+      "macro_f1": 0.9939905703220188
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.5,
+      "errors": 8,
+      "accuracy": 0.9944289693593314,
+      "macro_f1": 0.9940171571129748
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 0.25,
+      "errors": 8,
+      "accuracy": 0.9944289693593314,
+      "macro_f1": 0.9940171571129748
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 10.0,
+      "gamma": 0.5,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.993365610408223
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 10.0,
+      "gamma": 2.0,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9935538197824452
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 100.0,
+      "gamma": 0.5,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9934056518717259
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 100.0,
+      "gamma": 1.0,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933924436517119
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 100.0,
+      "gamma": 0.25,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9932581980287409
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 10.0,
+      "gamma": 0.25,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9932484261807094
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 10.0,
+      "gamma": 2.0,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9935538197824452
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 100.0,
+      "gamma": 0.125,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.993401714816325
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 100.0,
+      "gamma": 1.0,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933924436517119
+    },
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 2.0,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9935538197824452
+    },
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 0.25,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933793210929883
+    },
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 1.0,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933725682366253
+    },
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 0.125,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933686311812245
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 0.25,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9932484261807094
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 1.0,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933991550275814
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 1.0,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933991550275814
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 1.0,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933893549669321
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.125,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933793210929883
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.25,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933793210929883
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.5,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933766512175979
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.5,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933766512175979
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.25,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9932484261807094
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.25,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9932484261807094
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.5,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9932145133041012
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 2.0,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9935538197824452
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 1.0,
+      "errors": 9,
+      "accuracy": 0.9937325905292479,
+      "macro_f1": 0.9933991550275814
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 10.0,
+      "gamma": 4.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9928329582565475
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 100.0,
+      "gamma": 4.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9928329582565475
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 10.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927907021020115
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 10.0,
+      "gamma": 1.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9926372484329138
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 100.0,
+      "gamma": 1.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9926359349405939
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 100.0,
+      "gamma": 0.5,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9925776180976452
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 10.0,
+      "gamma": 4.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9928740602359168
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 100.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927762114672577
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 100.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927762114672577
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 100.0,
+      "gamma": 0.25,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.992633484567478
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 10.0,
+      "gamma": 0.25,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9926304240953161
+    },
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 4.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927894196872717
+    },
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 4.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927894196872717
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927762114672577
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927762114672577
+    },
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927670259639351
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 1.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9926269877233336
+    },
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 1.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9926135048625098
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927762114672577
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927762114672577
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927731227824779
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927731227824779
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 1.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9926135048625098
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 1.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9926135048625098
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.125,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9926086415604768
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.25,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9926086415604768
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 1.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9925854050949541
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.5,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9924375466607962
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.25,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9924217257299184
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.5,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9924217257299184
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927762114672577
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 2.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9927762114672577
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 0.25,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9926304240953161
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 1.0,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9926271450797459
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 0.125,
+      "errors": 10,
+      "accuracy": 0.9930362116991643,
+      "macro_f1": 0.9924900496373168
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 100.0,
+      "gamma": 2.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9920197027561397
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 10.0,
+      "gamma": 0.25,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.991984712183195
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 100.0,
+      "gamma": 0.125,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9919624212674287
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 100.0,
+      "gamma": 0.25,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9919624212674287
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 100.0,
+      "gamma": 4.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9921069691526089
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 10.0,
+      "gamma": 0.5,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9918785443960679
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 10.0,
+      "gamma": 1.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9918720475519234
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 100.0,
+      "gamma": 0.125,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9918499375236308
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 10.0,
+      "gamma": 0.5,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9918500944834076
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 10.0,
+      "gamma": 0.125,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9917028956878106
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 0.5,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9918785443960679
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 1.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9918408237154299
+    },
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 0.25,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9918243064249079
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 0.25,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9916783426939976
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 4.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9920089400941106
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 4.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9920089400941106
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 2.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9919972726780555
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 2.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9919972726780555
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 2.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9919802790342537
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 2.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9919802790342537
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.25,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9917229348789103
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.25,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9917229348789103
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.125,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9917028956878106
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.125,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9917028956878106
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 2.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9919972726780555
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 0.5,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9918720475519234
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 1.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.991853369033717
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 0.5,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.991853369033717
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 1.0,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.991853369033717
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 0.125,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9918396605838622
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 0.25,
+      "errors": 11,
+      "accuracy": 0.9923398328690808,
+      "macro_f1": 0.9916898448242089
+    },
+    {
+      "model": "AL-C-68D",
+      "dimension": 68,
+      "C": 10.0,
+      "gamma": 0.125,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9911696885184125
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 10.0,
+      "gamma": 4.0,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9913660328746232
+    },
+    {
+      "model": "MDS2-Delta+CorrectPos-81D",
+      "dimension": 81,
+      "C": 100.0,
+      "gamma": 4.0,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9913660328746232
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 4.0,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9912786835308278
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 4.0,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9912786835308278
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 0.125,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9911079245794827
+    },
+    {
+      "model": "Events+Density-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 0.125,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9910655813564955
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 100.0,
+      "gamma": 0.5,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9910603406086043
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 4.0,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.991228514003852
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 4.0,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.991228514003852
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.125,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9911079245794827
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.125,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9911079245794827
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.5,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9910603406086043
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 0.5,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9910603406086043
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 1.0,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9910337796370786
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 1.0,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9910272804494771
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 0.125,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.991087938935786
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 0.25,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.99108494714982
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 0.5,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.99108494714982
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 0.5,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.991084893602417
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 0.125,
+      "errors": 12,
+      "accuracy": 0.9916434540389972,
+      "macro_f1": 0.9909099183915678
+    },
+    {
+      "model": "MDS2-Delta-NoPos-77D",
+      "dimension": 77,
+      "C": 10.0,
+      "gamma": 0.125,
+      "errors": 13,
+      "accuracy": 0.9909470752089137,
+      "macro_f1": 0.9903010301143755
+    },
+    {
+      "model": "MDS4-Delta-NoPos-85D",
+      "dimension": 85,
+      "C": 10.0,
+      "gamma": 0.125,
+      "errors": 13,
+      "accuracy": 0.9909470752089137,
+      "macro_f1": 0.9901429117186638
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.125,
+      "errors": 13,
+      "accuracy": 0.9909470752089137,
+      "macro_f1": 0.9903162307972746
+    },
+    {
+      "model": "Legacy-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.25,
+      "errors": 13,
+      "accuracy": 0.9909470752089137,
+      "macro_f1": 0.9902899717654712
+    },
+    {
+      "model": "Harmonic+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 0.125,
+      "errors": 13,
+      "accuracy": 0.9909470752089137,
+      "macro_f1": 0.9902834725778696
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 4.0,
+      "errors": 14,
+      "accuracy": 0.9902506963788301,
+      "macro_f1": 0.9899449628676535
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Lengths-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 4.0,
+      "errors": 14,
+      "accuracy": 0.9902506963788301,
+      "macro_f1": 0.9899449628676535
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 4.0,
+      "errors": 15,
+      "accuracy": 0.9895543175487466,
+      "macro_f1": 0.9891319547375723
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 4.0,
+      "errors": 15,
+      "accuracy": 0.9895543175487466,
+      "macro_f1": 0.9891319547375723
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 10.0,
+      "gamma": 4.0,
+      "errors": 15,
+      "accuracy": 0.9895543175487466,
+      "macro_f1": 0.9891319547375723
+    },
+    {
+      "model": "MDS4-Delta+OldPos-89D",
+      "dimension": 89,
+      "C": 100.0,
+      "gamma": 4.0,
+      "errors": 15,
+      "accuracy": 0.9895543175487466,
+      "macro_f1": 0.9891319547375723
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 10.0,
+      "gamma": 4.0,
+      "errors": 15,
+      "accuracy": 0.9895543175487466,
+      "macro_f1": 0.9892565284448462
+    },
+    {
+      "model": "MDS4-Delta+CorrectPos+Magnitudes-93D",
+      "dimension": 93,
+      "C": 100.0,
+      "gamma": 4.0,
+      "errors": 15,
+      "accuracy": 0.9895543175487466,
+      "macro_f1": 0.9892565284448462
+    }
+  ]
+}

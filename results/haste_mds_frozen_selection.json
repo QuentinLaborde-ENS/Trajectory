@@ -1,0 +1,130 @@
+{
+  "method": "MDS4-Delta+OldPos-89D",
+  "train_size": 1422,
+  "train_labels_sha256": "6cee98db8efb7e024b2d9468db54fb21fbdfa4a2679014df9f6815d86b045c8e",
+  "protocol_sha256": "e0f101277103425bbf743d060980d4bb04f45c86f00b5ec9d0bd597e4a08835e",
+  "selection_rule": "minimum mean repeated OOF errors, then dimension, then macro-F1",
+  "cv": {
+    "AL-C-68D": {
+      "errors": [
+        3,
+        7,
+        7,
+        8,
+        9
+      ],
+      "acc_mean": 0.9952180028129396,
+      "f1_mean": 0.9946200663767275
+    },
+    "Events+Density-85D": {
+      "errors": [
+        5,
+        5,
+        7,
+        5,
+        6
+      ],
+      "acc_mean": 0.9960618846694796,
+      "f1_mean": 0.9955605152635811
+    },
+    "Legacy-89D": {
+      "errors": [
+        5,
+        5,
+        7,
+        4,
+        6
+      ],
+      "acc_mean": 0.9962025316455696,
+      "f1_mean": 0.9957258883298413
+    },
+    "Harmonic+OldPos-89D": {
+      "errors": [
+        5,
+        4,
+        6,
+        5,
+        6
+      ],
+      "acc_mean": 0.9963431786216598,
+      "f1_mean": 0.9958861675351741
+    },
+    "MDS2-Delta-NoPos-77D": {
+      "errors": [
+        7,
+        6,
+        4,
+        6,
+        10
+      ],
+      "acc_mean": 0.9953586497890295,
+      "f1_mean": 0.9947875420441413
+    },
+    "MDS2-Delta+CorrectPos-81D": {
+      "errors": [
+        4,
+        5,
+        4,
+        4,
+        7
+      ],
+      "acc_mean": 0.9966244725738396,
+      "f1_mean": 0.9962033638550549
+    },
+    "MDS4-Delta-NoPos-85D": {
+      "errors": [
+        8,
+        7,
+        7,
+        4,
+        6
+      ],
+      "acc_mean": 0.9954992967651195,
+      "f1_mean": 0.994965355126317
+    },
+    "MDS4-Delta+OldPos-89D": {
+      "errors": [
+        5,
+        6,
+        4,
+        3,
+        3
+      ],
+      "acc_mean": 0.9970464135021097,
+      "f1_mean": 0.9966585075242079
+    },
+    "MDS4-Delta+CorrectPos-89D": {
+      "errors": [
+        6,
+        6,
+        3,
+        3,
+        4
+      ],
+      "acc_mean": 0.9969057665260198,
+      "f1_mean": 0.9965200713846671
+    },
+    "MDS4-Delta+CorrectPos+Lengths-93D": {
+      "errors": [
+        7,
+        6,
+        6,
+        2,
+        8
+      ],
+      "acc_mean": 0.9959212376933897,
+      "f1_mean": 0.9954221367496852
+    },
+    "MDS4-Delta+CorrectPos+Magnitudes-93D": {
+      "errors": [
+        11,
+        4,
+        6,
+        7,
+        11
+      ],
+      "acc_mean": 0.9945147679324895,
+      "f1_mean": 0.9939238379153486
+    }
+  }
+}
