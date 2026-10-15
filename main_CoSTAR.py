@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
+
 # -*- coding: utf-8 -*-
-"""CoSTAR — Fixed, adaptive CV and contrastive metric learning."""
+"""CoSTAR — Fixed / Adaptive-CV / Triplet / NCA."""
 
 import json
 from pathlib import Path
@@ -13,7 +14,7 @@ from scipy.fft import dct
 from scipy.ndimage import gaussian_filter1d
 from scipy.spatial.distance import pdist, squareform
 from scipy.optimize import minimize
-from scipy.special import expit
+from scipy.special import expit, logsumexp
 
 from sklearn.model_selection import StratifiedKFold, RepeatedStratifiedKFold
 from sklearn.metrics import f1_score
@@ -32,20 +33,23 @@ OUTER, REPEATS, INNER = 5, 5, 3
 C_GRID = (10., 100.)
 GAMMA_GRID = (.125, .25, .5, 1., 2., 4.)
 
-# Adaptive-CV configuration.
+# Adaptive-CV.
 FACTORS = (.5, .75, 1., 1.5, 2.)
-CV_PENALTY = .0001
-PASSES = 2
+CV_PENALTY, CV_PASSES = .0001, 2
 
-# Adaptive-Contrastive configuration.
-TRIPLET_MARGIN = .1
-TRIPLET_TAU = .2
-TRIPLET_BETA = .001
+# Triplet baseline.
+TRIPLET_MARGIN, TRIPLET_TAU, TRIPLET_BETA = .1, .2, .001
+TRIPLET_ANCHORS_PER_CLASS, TRIPLETS_PER_ANCHOR, HARD_NEG_K = 40, 4, 10
 
-TRIPLET_ANCHORS_PER_CLASS = 40
-TRIPLETS_PER_ANCHOR = 4
-HARD_NEG_K = 10
-TRIPLET_BOUNDS = (.5, 2.)
+# NCA — hyperparameters selected by inner CV.
+NCA_TAU_GRID = (.05, .075, .10, .15, .30)
+NCA_BETA_GRID = (.01, .03, .05, .10)
+NCA_ANCHORS_PER_CLASS = 32
+NCA_MAXITER = 100
+
+# Shared positive weight constraints.
+WEIGHT_BOUNDS = (.5, 2.)
+WEIGHT_MAXITER = 200
 
 T, E = np.linspace(0, 1, N), np.linspace(0, 1, NE)
 
@@ -64,7 +68,7 @@ GROUPS = {
 
 GROUP_NAMES = tuple(GROUPS)
 GROUP_BASE_SUMS = np.array([sum(BASE[k] for k in GROUPS[g]) for g in GROUP_NAMES])
-ONES = (1.,)*len(GROUP_NAMES)
+ONES = (1.,)*len(GROUPS)
 
 D_CORE = 2*H*(FT+FS+FE) + FE + 1 + FR + FC
 D_EXTRA = FC + FR + 8*H + 4
@@ -72,16 +76,18 @@ DIM = D_CORE + D_EXTRA
 
 FIX = f"R5-Fixed-{DIM}D"
 REG_CV = f"R5-Adaptive-CV-{DIM}D"
-REG_TRIPLET = f"R5-Adaptive-Contrastive-{DIM}D"
+REG_TRIPLET = f"R5-Adaptive-Triplet-{DIM}D"
+REG_NCA = f"R5-Adaptive-NCA-{DIM}D"
 
-MODELS = (FIX, REG_CV, REG_TRIPLET)
+MODELS = (FIX, REG_CV, REG_TRIPLET, REG_NCA)
+COLORS = ("lightgray", "steelblue", "darkorange", "crimson")
 
-PREFIX = f"costar_r5_contrastive_{DIM}D"
+PREFIX = f"costar_r5_nca_{DIM}D"
 FIG, OUT = Path("figures"), Path("results")
 
 
 # ============================================================
-# 1. SYMBOLIC FEATURE EXTRACTION — R5
+# 1. R5 SYMBOLIC FEATURE EXTRACTION
 # ============================================================
 
 def quantize(theta):
@@ -101,7 +107,8 @@ def interp_rank(x):
 
     xp = np.linspace(0, 1, len(x))
 
-    if x.ndim == 1: return np.interp(E, xp, x)
+    if x.ndim == 1:
+        return np.interp(E, xp, x)
 
     return np.column_stack([np.interp(E, xp, x[:,j]) for j in range(x.shape[1])])
 
@@ -111,7 +118,8 @@ def event_features(ids):
     starts = np.flatnonzero(np.r_[True, ids[1:] != ids[:-1]])
     ends = np.r_[starts[1:], len(ids)]
 
-    symbols, lengths = ids[starts], (ends-starts)/len(ids)
+    symbols = ids[starts]
+    lengths = (ends-starts)/len(ids)
     delta = (symbols[1:].astype(int)-symbols[:-1].astype(int)+K//2) % K-K//2
 
     def pack(x):
@@ -136,7 +144,8 @@ def encode(case):
     positive = speed[speed > 1e-10]
 
     cutoff = max(.03*np.median(positive), 1e-10) if len(positive) else 1e-10
-    theta, valid = np.arctan2(v[1], v[0]), speed > cutoff
+    theta = np.arctan2(v[1], v[0])
+    valid = speed > cutoff
 
     if valid.any():
         prev = np.where(valid, np.arange(n), -1)
@@ -177,7 +186,7 @@ def encode(case):
 
     events_arc, legacy_arc, starts, symbols = event_features(ids_arc)
 
-    # Additional R5 components.
+    # Supplementary R5 features.
     turn_t_sig = np.tanh(np.gradient(gaussian_filter1d(np.unwrap(theta_t), sigma=SIGMA, mode="nearest"), T)/(TURNING_SCALE*(N-1)))
     turn_time = dct(np.linspace(-1,1,5)[np.digitize(turn_t_sig, (-.6,-.2,.2,.6))], type=2, norm="ortho")[:FC]
 
@@ -211,26 +220,24 @@ def extract(X):
 
 
 # ============================================================
-# 2. GROUPED DISTANCE NORMALIZATION
+# 2. TRAINING-FOLD DISTANCE NORMALIZATION
 # ============================================================
 
 def group_basis(D, it, iv):
 
     basis = {}
 
-    for g, keys in GROUPS.items():
+    for group, keys in GROUPS.items():
 
         A_sum, B_sum = None, None
 
         for k in keys:
 
-            A = D[k][np.ix_(it,it)].astype(np.float64)
-            B = D[k][np.ix_(iv,it)].astype(np.float64)
+            A = np.asarray(D[k][np.ix_(it,it)], dtype=np.float64)
+            B = np.asarray(D[k][np.ix_(iv,it)], dtype=np.float64)
 
-            # Scale estimated exclusively on training observations.
             scale = max(float(A.sum())/(len(it)*(len(it)-1)), 1e-12)
-
-            A, B = BASE[k]*(A/scale), BASE[k]*(B/scale)
+            A, B = BASE[k]*A/scale, BASE[k]*B/scale
 
             if A_sum is None:
                 A_sum, B_sum = A, B
@@ -238,14 +245,14 @@ def group_basis(D, it, iv):
                 A_sum += A
                 B_sum += B
 
-        basis[g] = (A_sum, B_sum)
+        basis[group] = (A_sum, B_sum)
 
     return basis
 
 
 def mix(basis, factors):
 
-    lam = np.asarray(factors, dtype=float)
+    lam = np.asarray(factors, float)
     den = float(lam @ GROUP_BASE_SUMS)
 
     A = sum(lam[j]*basis[g][0] for j,g in enumerate(GROUP_NAMES))/den
@@ -254,23 +261,26 @@ def mix(basis, factors):
     return A, B
 
 
+def weight_bounds():
+    return [(np.log(WEIGHT_BOUNDS[0]), np.log(WEIGHT_BOUNDS[1]))]*len(GROUP_NAMES)
+
+
 # ============================================================
-# 3. TRAINING-ONLY CONTRASTIVE TRIPLET MINING
+# 3. CONTRASTIVE TRIPLET BASELINE
 # ============================================================
 
 def make_triplets(reference_D, labels, seed):
 
     labels = np.asarray(labels)
     rng = np.random.default_rng(seed)
+    indices = np.arange(len(labels))
 
     triples = []
-    n = len(labels)
-    all_idx = np.arange(n)
 
     for c in np.unique(labels):
 
-        members = all_idx[labels == c]
-        outsiders = all_idx[labels != c]
+        members = indices[labels == c]
+        outsiders = indices[labels != c]
 
         if len(members) < 2 or not len(outsiders):
             continue
@@ -284,41 +294,30 @@ def make_triplets(reference_D, labels, seed):
         for i in anchors:
 
             positives = members[members != i]
-
-            # Hard negatives are mined using the fixed reference distance.
-            nh = min(HARD_NEG_K, len(outsiders))
-            hard = outsiders[np.argpartition(reference_D[i, outsiders], nh-1)[:nh]]
+            k = min(HARD_NEG_K, len(outsiders))
+            hard = outsiders[np.argpartition(reference_D[i, outsiders], k-1)[:k]]
 
             for _ in range(TRIPLETS_PER_ANCHOR):
 
                 p = int(rng.choice(positives))
-                neg_pool = hard if rng.random() < .75 else outsiders
-                nidx = int(rng.choice(neg_pool))
-
-                triples.append((int(i), p, nidx))
+                neg = int(rng.choice(hard if rng.random() < .75 else outsiders))
+                triples.append((int(i), p, neg))
 
     if not triples:
-        raise ValueError("Cannot mine triplets: insufficient class membership.")
+        raise ValueError("Insufficient labeled data to construct triplets.")
 
     return np.asarray(triples, dtype=np.intp)
 
 
-# ============================================================
-# 4. CONTRASTIVE METRIC LEARNING
-# ============================================================
+def learn_triplet(basis, labels, seed):
 
-def learn_contrastive(basis, labels, seed):
-
-    # Reference distances are built solely from this training fold.
     reference_D, _ = mix(basis, ONES)
     triplets = make_triplets(reference_D, labels, seed)
 
     i, p, n = triplets.T
 
-    # For each triplet and group:
-    # squared distance(anchor, positive) - squared distance(anchor, negative).
-    diffs = np.column_stack([
-        basis[g][0][i,p] - basis[g][0][i,n]
+    X = np.column_stack([
+        basis[g][0][i,p]-basis[g][0][i,n]
         for g in GROUP_NAMES
     ])
 
@@ -326,148 +325,150 @@ def learn_contrastive(basis, labels, seed):
 
     def loss_grad(theta):
 
-        # Log-parameterization guarantees positive weights.
         lam = np.exp(theta)
-        den = lam @ b
+        den = float(lam @ b)
 
-        delta = (diffs @ lam)/den
-        z = (TRIPLET_MARGIN + delta)/TRIPLET_TAU
+        delta = (X @ lam)/den
+        z = (TRIPLET_MARGIN+delta)/TRIPLET_TAU
 
-        # Stable softplus triplet loss with log-weight regularization.
-        loss = float(np.logaddexp(0., z).mean() + TRIPLET_BETA*(theta @ theta))
+        loss = np.logaddexp(0., z).mean()+TRIPLET_BETA*(theta @ theta)
+        grad = np.mean(expit(z)[:,None]*(X-delta[:,None]*b[None,:])*(lam[None,:]/(den*TRIPLET_TAU)), axis=0)+2*TRIPLET_BETA*theta
 
-        # Analytical gradient with respect to log(lambda).
-        dz_dtheta = (diffs - delta[:,None]*b[None,:])*(lam[None,:]/(den*TRIPLET_TAU))
-        grad = np.mean(expit(z)[:,None]*dz_dtheta, axis=0) + 2*TRIPLET_BETA*theta
-
-        return loss, grad
-
-    bounds = [(np.log(TRIPLET_BOUNDS[0]), np.log(TRIPLET_BOUNDS[1]))]*len(GROUP_NAMES)
+        return float(loss), grad
 
     result = minimize(
-        loss_grad,
-        np.zeros(len(GROUP_NAMES)),
-        jac=True,
-        method="L-BFGS-B",
-        bounds=bounds,
-        options={"maxiter": 200, "ftol": 1e-12}
+        loss_grad, np.zeros(len(GROUP_NAMES)), jac=True,
+        method="L-BFGS-B", bounds=weight_bounds(),
+        options={"maxiter": WEIGHT_MAXITER, "ftol": 1e-12}
     )
 
     factors = tuple(map(float, np.exp(result.x)))
 
     info = {
-        "triplets": int(len(triplets)),
         "loss": float(result.fun),
-        "success": bool(result.success)
+        "triplets": int(len(triplets)),
+        "success": bool(result.success),
+        "iterations": int(result.nit)
     }
 
     return factors, info
 
 
 # ============================================================
-# 5. INNER CV — THREE METHODS
+# 4. NCA — NEIGHBORHOOD COMPONENTS ANALYSIS
 # ============================================================
 
-def inner_tune(D, y, it, seed):
+def nca_training_data(basis, labels, seed):
 
-    cv = StratifiedKFold(n_splits=INNER, shuffle=True, random_state=seed)
+    labels = np.asarray(labels)
+    rng = np.random.default_rng(seed)
 
-    folds = []
-    contrastive_factors = []
+    # Class-balanced subset of anchors.
+    anchors = []
 
-    for fold_index, (a0,b0) in enumerate(cv.split(np.zeros(len(it)), y[it])):
+    for c in np.unique(labels):
 
-        ia, ib = it[a0], it[b0]
-        basis = group_basis(D, ia, ib)
+        members = np.flatnonzero(labels == c)
 
-        # Train contrastive weights only on this inner-training fold.
-        factors, _ = learn_contrastive(basis, y[ia], seed=seed+10000+fold_index)
+        if len(members) < 2:
+            continue
 
-        folds.append((ia, ib, basis))
-        contrastive_factors.append(factors)
+        k = min(len(members), NCA_ANCHORS_PER_CLASS)
+        anchors.extend(rng.choice(members, size=k, replace=False))
 
-    # Shared cache for Fixed and Adaptive-CV.
-    cache = {}
+    anchors = np.asarray(anchors, dtype=np.intp)
 
-    def evaluate(factors):
+    if len(anchors) == 0:
+        raise ValueError("NCA requires at least two samples per represented class.")
 
-        if factors not in cache:
+    # All training samples remain candidate neighbors.
+    A = np.stack([basis[g][0][anchors,:] for g in GROUP_NAMES], axis=0)
 
-            scores = {(C,gamma): [] for C in C_GRID for gamma in GAMMA_GRID}
+    same = labels[anchors,None] == labels[None,:]
+    same[np.arange(len(anchors)), anchors] = False
 
-            for ia, ib, basis in folds:
+    if not np.all(same.any(axis=1)):
+        raise ValueError("Some NCA anchors have no positive neighbors.")
 
-                A, B = mix(basis, factors)
+    return anchors, A, same
 
-                for gamma in GAMMA_GRID:
 
-                    Ktr, Kva = np.exp(-gamma*A), np.exp(-gamma*B)
+def learn_nca(basis, labels, seed, tau, beta):
 
-                    for C in C_GRID:
+    anchors, A, same = nca_training_data(basis, labels, seed)
 
-                        clf = SVC(C=C, kernel="precomputed").fit(Ktr, y[ia])
-                        pred = clf.predict(Kva)
-                        scores[C,gamma].append(f1_score(y[ib], pred, average="macro", zero_division=0))
+    b = np.asarray(GROUP_BASE_SUMS, dtype=float)
+    n_anchors = len(anchors)
 
-            cache[factors] = {k: float(np.mean(v)) for k,v in scores.items()}
+    def loss_grad(theta):
 
-        return cache[factors]
+        lam = np.exp(theta)
+        den = float(lam @ b)
 
-    def best_for(factors):
+        # Fused squared distance from each anchor to each training sample.
+        D = np.einsum("g,gij->ij", lam, A, optimize=True)/den
 
-        scores = evaluate(factors)
-        C, gamma = max(scores, key=lambda k: scores[k])
+        logits = -D/tau
 
-        return factors, C, gamma
+        # Exclude self-neighbors from the denominator.
+        logits[np.arange(n_anchors), anchors] = -np.inf
 
-    def objective(key):
+        positive_logits = np.where(same, logits, -np.inf)
 
-        f, C, gamma = key
-        return evaluate(f)[C,gamma] - CV_PENALTY*sum(np.log(x)**2 for x in f)
+        log_all = logsumexp(logits, axis=1)
+        log_pos = logsumexp(positive_logits, axis=1)
 
-    # --------------------------------------------------------
-    # 5.1 Fixed baseline
-    # --------------------------------------------------------
+        # Negative log probability of a same-class neighbor.
+        nca_loss = float(np.mean(log_all-log_pos))
+        penalty = float(beta*(theta @ theta))
 
-    fixed = best_for(ONES)
+        # Neighbor probabilities across all candidates and positives.
+        P = np.exp(logits-log_all[:,None])
+        Q = np.exp(positive_logits-log_pos[:,None])
 
-    # --------------------------------------------------------
-    # 5.2 Adaptive-CV — coordinate descent
-    # --------------------------------------------------------
+        # dL/dD = (Q-P)/(M*tau).
+        dL_dD = (Q-P)/(n_anchors*tau)
 
-    current = fixed
+        # Analytical derivatives through distance normalization.
+        s = np.einsum("ij,gij->g", dL_dD, A, optimize=True)
+        correction = float(np.sum(dL_dD*D))
 
-    for _ in range(PASSES):
+        grad = (lam/den)*(s-b*correction)+2*beta*theta
 
-        previous = current
+        return nca_loss+penalty, grad
 
-        for j in range(len(GROUP_NAMES)):
+    result = minimize(
+        loss_grad, np.zeros(len(GROUP_NAMES)), jac=True,
+        method="L-BFGS-B", bounds=weight_bounds(),
+        options={"maxiter": NCA_MAXITER, "ftol": 1e-10, "gtol": 1e-8}
+    )
 
-            candidates = []
+    factors = tuple(map(float, np.exp(result.x)))
+    at_bounds = np.isclose(np.exp(result.x), WEIGHT_BOUNDS[0], atol=1e-4) | np.isclose(np.exp(result.x), WEIGHT_BOUNDS[1], atol=1e-4)
 
-            for value in FACTORS:
+    info = {
+        "loss": float(result.fun),
+        "tau": float(tau),
+        "beta": float(beta),
+        "anchors": int(len(anchors)),
+        "candidate_neighbors": int(len(labels)),
+        "n_at_bounds": int(at_bounds.sum()),
+        "success": bool(result.success),
+        "iterations": int(result.nit)
+    }
 
-                f = list(current[0])
-                f[j] = value
+    return factors, info
 
-                candidates.append(best_for(tuple(f)))
 
-            candidate = max(candidates, key=objective)
+# ============================================================
+# 5. SVM EVALUATION ON INNER FOLDS
+# ============================================================
 
-            if objective(candidate) > objective(current)+1e-12:
-                current = candidate
+def svm_scores(folds, y, factors_by_fold):
 
-        if current == previous:
-            break
+    scores = {(C,gamma): [] for C in C_GRID for gamma in GAMMA_GRID}
 
-    # --------------------------------------------------------
-    # 5.3 Adaptive-Contrastive — inner SVM selection
-    # --------------------------------------------------------
-
-    # Weights are learned independently on each inner-training fold.
-    contrast_scores = {(C,gamma): [] for C in C_GRID for gamma in GAMMA_GRID}
-
-    for (ia, ib, basis), factors in zip(folds, contrastive_factors):
+    for (ia, ib, basis), factors in zip(folds, factors_by_fold):
 
         A, B = mix(basis, factors)
 
@@ -479,101 +480,227 @@ def inner_tune(D, y, it, seed):
 
                 clf = SVC(C=C, kernel="precomputed").fit(Ktr, y[ia])
                 pred = clf.predict(Kva)
-                contrast_scores[C,gamma].append(f1_score(y[ib], pred, average="macro", zero_division=0))
 
-    means_contrast = {k: float(np.mean(v)) for k,v in contrast_scores.items()}
-    Cc, gammac = max(means_contrast, key=lambda k: means_contrast[k])
+                scores[C,gamma].append(
+                    f1_score(y[ib], pred, average="macro", zero_division=0)
+                )
+
+    return {k: float(np.mean(v)) for k,v in scores.items()}
+
+
+def best_svm(scores):
+    C, gamma = max(scores, key=lambda k: scores[k])
+    return C, gamma, float(scores[C,gamma])
+
+
+# ============================================================
+# 6. INNER CV — FOUR METHODS
+# ============================================================
+
+def inner_tune(D, y, it, seed):
+
+    cv = StratifiedKFold(n_splits=INNER, shuffle=True, random_state=seed)
+    folds = []
+
+    for a0, b0 in cv.split(np.zeros(len(it)), y[it]):
+        ia, ib = it[a0], it[b0]
+        folds.append((ia, ib, group_basis(D, ia, ib)))
+
+    # --------------------------------------------------------
+    # 6.1 Fixed and adaptive-CV — shared cache.
+    # --------------------------------------------------------
+
+    cache = {}
+
+    def evaluate(factors):
+
+        if factors not in cache:
+            cache[factors] = svm_scores(folds, y, [factors]*len(folds))
+
+        return cache[factors]
+
+    def best_for(factors):
+
+        C, gamma, score = best_svm(evaluate(factors))
+        return factors, C, gamma, score
+
+    def objective(key):
+
+        factors, C, gamma, score = key
+        return score-CV_PENALTY*sum(np.log(v)**2 for v in factors)
+
+    fixed = best_for(ONES)
+    current = fixed
+
+    for _ in range(CV_PASSES):
+
+        previous = current
+
+        for j in range(len(GROUP_NAMES)):
+
+            candidates = []
+
+            for value in FACTORS:
+
+                factors = list(current[0])
+                factors[j] = value
+
+                candidates.append(best_for(tuple(factors)))
+
+            challenger = max(candidates, key=objective)
+
+            if objective(challenger) > objective(current)+1e-12:
+                current = challenger
+
+        if current == previous:
+            break
+
+    # --------------------------------------------------------
+    # 6.2 Triplet learning.
+    # --------------------------------------------------------
+
+    triplet_factors = []
+
+    for f, (ia, ib, basis) in enumerate(folds):
+
+        factors, _ = learn_triplet(
+            basis, y[ia], seed=seed+10000+f
+        )
+
+        triplet_factors.append(factors)
+
+    triplet_scores = svm_scores(folds, y, triplet_factors)
+    Ct, gt, st = best_svm(triplet_scores)
+
+    # --------------------------------------------------------
+    # 6.3 NCA — inner selection of tau and beta.
+    # --------------------------------------------------------
+
+    best_nca = None
+    nca_candidates = []
+
+    for tau in NCA_TAU_GRID:
+        for beta in NCA_BETA_GRID:
+
+            fold_factors = []
+
+            for f, (ia, ib, basis) in enumerate(folds):
+
+                factors, _ = learn_nca(
+                    basis, y[ia], seed=seed+20000+f,
+                    tau=tau, beta=beta
+                )
+
+                fold_factors.append(factors)
+
+            candidate_scores = svm_scores(folds, y, fold_factors)
+            Cn, gn, sn = best_svm(candidate_scores)
+
+            candidate = (float(tau), float(beta), Cn, gn, sn)
+            nca_candidates.append(candidate)
+
+            # Prefer the first candidate if scores tie.
+            # NCA_BETA_GRID lists stronger regularization first.
+            if best_nca is None or sn > best_nca[-1]+1e-12:
+                best_nca = candidate
+
+    # --------------------------------------------------------
+    # 6.4 Return selections.
+    # --------------------------------------------------------
 
     selected = {
         FIX: fixed,
         REG_CV: current,
-        REG_TRIPLET: (Cc, gammac)
-    }
-
-    scores = {
-        FIX: evaluate(fixed[0])[fixed[1:]],
-        REG_CV: evaluate(current[0])[current[1:]],
-        REG_TRIPLET: means_contrast[Cc,gammac]
+        REG_TRIPLET: (Ct, gt, st),
+        REG_NCA: best_nca
     }
 
     print(
-        f"Inner | CV patterns={len(cache)} | CV factors={current[0]} | "
-        f"Triplet factor mean={np.mean(contrastive_factors, axis=0).round(3)}",
+        f"Inner | CV patterns={len(cache)} | "
+        f"CV={np.round(current[0],3)} | "
+        f"Triplet={np.round(np.mean(triplet_factors,axis=0),3)} | "
+        f"NCA=(tau={best_nca[0]}, beta={best_nca[1]})",
         flush=True
     )
 
-    return selected, scores
+    return selected, nca_candidates
 
 
 # ============================================================
-# 6. FINAL OUTER-FOLD TRAINING
+# 7. OUTER-FOLD TRAINING AND PREDICTION
 # ============================================================
 
 def fit_predict(D, y, it, iv, model, key, seed):
 
     basis = group_basis(D, it, iv)
 
-    if model == REG_TRIPLET:
+    if model in (FIX, REG_CV):
 
-        C, gamma = key
+        factors, C, gamma, inner_score = key
+        info = {}
 
-        # Relearn metric on the complete outer-training partition.
-        factors, info = learn_contrastive(basis, y[it], seed)
+    elif model == REG_TRIPLET:
+
+        C, gamma, inner_score = key
+        factors, info = learn_triplet(basis, y[it], seed)
+
+    elif model == REG_NCA:
+
+        tau, beta, C, gamma, inner_score = key
+        factors, info = learn_nca(basis, y[it], seed, tau, beta)
 
     else:
-
-        factors, C, gamma = key
-        info = {}
+        raise ValueError(f"Unknown model: {model}")
 
     A, B = mix(basis, factors)
 
     clf = SVC(C=C, kernel="precomputed").fit(np.exp(-gamma*A), y[it])
     pred = clf.predict(np.exp(-gamma*B))
 
-    return pred, factors, C, gamma, info
+    return pred, factors, C, gamma, inner_score, info
 
 
 # ============================================================
-# 7. FIGURES 01–02 — MODEL COMPARISON
+# 8. FIGURES — PERFORMANCE
 # ============================================================
 
 def plot_error_figures(report):
 
     names = list(report)
-    e = np.array([report[k]["errors"] for k in names], float)
+    errors = np.asarray([report[k]["errors"] for k in names], float)
+    means, stds = errors.mean(axis=1), errors.std(axis=1, ddof=1)
 
-    mu, sd = e.mean(axis=1), e.std(axis=1, ddof=1)
-    colors = ("lightgray", "steelblue", "crimson")
+    # Figure 01 — Mean classification errors.
+    fig, ax = plt.subplots(figsize=(12, 4.8))
 
-    # Figure 01 — Mean errors ± standard deviation.
-    fig, ax = plt.subplots(figsize=(11, 4.2))
-
-    ax.barh(names, mu, xerr=sd, capsize=3, color=colors)
+    ax.barh(names, means, xerr=stds, capsize=3, color=COLORS)
     ax.invert_yaxis()
-    ax.spines[["top", "right"]].set_visible(False)
-    ax.set(xlabel="Errors per 1422 trajectories", title="R5 — fixed, CV and contrastive weighting")
+
+    ax.set(xlabel="Errors per 1422 trajectories", title="R5 — Comparison of metric-learning strategies")
+    ax.spines[["top","right"]].set_visible(False)
     ax.grid(axis="x", alpha=.15)
     ax.set_axisbelow(True)
 
-    for k, (m,s) in enumerate(zip(mu,sd)):
-        ax.text(m+s+.1, k, f"{m:.2f} ± {s:.2f}", va="center", fontsize=9)
+    for i, (m, sd) in enumerate(zip(means, stds)):
+        ax.text(m+sd+.1, i, f"{m:.2f} ± {sd:.2f}", fontsize=9, va="center")
 
-    ax.set_xlim(right=max(mu+sd)+1.5)
+    ax.set_xlim(right=max(means+stds)+1.5)
+
     fig.tight_layout()
     fig.savefig(FIG/f"{PREFIX}_01_ablation.png", dpi=220, bbox_inches="tight")
     plt.close(fig)
 
-    # Figure 02 — Errors across repeats.
-    fig, ax = plt.subplots(figsize=(11, 4.2))
+    # Figure 02 — Errors by CV repeat.
+    fig, ax = plt.subplots(figsize=(11, 4.5))
 
-    for name, values, color in zip(names, e, colors):
-        ax.plot(range(1, REPEATS+1), values, ".-", lw=1.3, ms=4, color=color, label=name)
+    for name, values, color in zip(names, errors, COLORS):
+        ax.plot(range(1,REPEATS+1), values, ".-", ms=3.5, lw=1.3, color=color, label=name)
 
-    ax.set(xlabel="CV repeat", ylabel="Classification errors", title="Paired repeated nested CV")
-    ax.set_xticks(range(1, REPEATS+1))
-    ax.spines[["top", "right"]].set_visible(False)
+    ax.set(xlabel="CV repeat", ylabel="Classification errors", title="Paired repeated nested cross-validation")
+    ax.set_xticks(range(1,REPEATS+1))
+    ax.spines[["top","right"]].set_visible(False)
     ax.grid(alpha=.15)
-    ax.legend(fontsize=8)
+    ax.legend(fontsize=8, ncol=2)
 
     fig.tight_layout()
     fig.savefig(FIG/f"{PREFIX}_02_repeats.png", dpi=220, bbox_inches="tight")
@@ -581,7 +708,7 @@ def plot_error_figures(report):
 
 
 # ============================================================
-# 8. RED ERROR FIGURES
+# 9. FIGURES — CLASS ERRORS AND CORRECTIONS
 # ============================================================
 
 def plot_red_errors(y, preds, baseline, model, suffix):
@@ -593,7 +720,6 @@ def plot_red_errors(y, preds, baseline, model, suffix):
     e0 = np.array([(p0[:,y==c] != c).sum() for c in classes])
     e1 = np.array([(p1[:,y==c] != c).sum() for c in classes])
 
-    # Errors by class.
     fig, ax = plt.subplots(figsize=(11, 4))
     x = np.arange(len(classes))
 
@@ -602,28 +728,27 @@ def plot_red_errors(y, preds, baseline, model, suffix):
 
     ax.set_xticks(x, classes)
     ax.set(xlabel="True class", ylabel="Errors across five repeats", title="Class-specific classification errors")
-    ax.spines[["top", "right"]].set_visible(False)
+    ax.spines[["top","right"]].set_visible(False)
     ax.legend(fontsize=8)
 
     fig.tight_layout()
     fig.savefig(FIG/f"{PREFIX}_{suffix}_class_errors_red.png", dpi=220, bbox_inches="tight")
     plt.close(fig)
 
-    # Corrected versus introduced errors.
     corrected = (p0 != y[None,:]) & (p1 == y[None,:])
     introduced = (p0 == y[None,:]) & (p1 != y[None,:])
 
     wins, losses = corrected.sum(axis=1), introduced.sum(axis=1)
 
     fig, ax = plt.subplots(figsize=(9, 4))
-    x = np.arange(1, REPEATS+1)
+    x = np.arange(1,REPEATS+1)
 
     ax.bar(x-.18, wins, .36, color="seagreen", label="Corrected errors")
     ax.bar(x+.18, losses, .36, color="crimson", label="New errors")
 
     ax.set_xticks(x)
     ax.set(xlabel="CV repeat", ylabel="Number of decisions", title="Corrected and introduced errors")
-    ax.spines[["top", "right"]].set_visible(False)
+    ax.spines[["top","right"]].set_visible(False)
     ax.legend(fontsize=8)
 
     fig.tight_layout()
@@ -639,31 +764,34 @@ def plot_red_errors(y, preds, baseline, model, suffix):
 
 
 # ============================================================
-# 9. WEIGHT DISTRIBUTIONS
+# 10. FIGURES — LEARNED WEIGHT DISTRIBUTIONS
 # ============================================================
 
 def plot_factors(parameters, model, suffix):
 
     fig, axes = plt.subplots(2, 3, figsize=(13, 7))
 
-    for j, (ax,g) in enumerate(zip(axes.flat, GROUP_NAMES)):
+    for j, (ax, group) in enumerate(zip(axes.flat, GROUP_NAMES)):
 
         values = np.asarray([v["factors"][j] for v in parameters[model]])
 
         if model == REG_CV:
 
             counts = [int(np.isclose(values,f).sum()) for f in FACTORS]
-            ax.bar(np.arange(len(FACTORS)), counts, color="crimson")
-            ax.set_xticks(np.arange(len(FACTORS)), [str(v) for v in FACTORS])
+
+            ax.bar(range(len(FACTORS)), counts, color="crimson")
+            ax.set_xticks(range(len(FACTORS)), [str(f) for f in FACTORS])
 
         else:
 
-            ax.hist(values, bins=np.linspace(TRIPLET_BOUNDS[0], TRIPLET_BOUNDS[1], 13), color="crimson", edgecolor="white")
-            ax.set_xlim(*TRIPLET_BOUNDS)
-            ax.axvline(1., color="black", lw=1, ls="--")
+            edges = np.linspace(*WEIGHT_BOUNDS, 13)
 
-        ax.set(xlabel="Selected multiplier", ylabel=f"Outer folds / {OUTER*REPEATS}", title=g.replace("_"," ").title())
-        ax.spines[["top", "right"]].set_visible(False)
+            ax.hist(values, bins=edges, color="crimson", edgecolor="white")
+            ax.axvline(1., color="black", ls="--", lw=1)
+            ax.set_xlim(*WEIGHT_BOUNDS)
+
+        ax.set(xlabel="Selected multiplier", ylabel=f"Outer folds / {OUTER*REPEATS}", title=group.replace("_"," ").title())
+        ax.spines[["top","right"]].set_visible(False)
         ax.grid(axis="y", alpha=.15)
         ax.set_axisbelow(True)
 
@@ -673,7 +801,37 @@ def plot_factors(parameters, model, suffix):
 
 
 # ============================================================
-# 10. MAIN — REPEATED NESTED CROSS-VALIDATION
+# 11. FIGURE — NCA HYPERPARAMETERS
+# ============================================================
+
+def plot_nca_hyperparameters(parameters):
+
+    entries = parameters[REG_NCA]
+    taus = [v["training_info"]["tau"] for v in entries]
+    betas = [v["training_info"]["beta"] for v in entries]
+
+    fig, axs = plt.subplots(1, 2, figsize=(10, 3.8))
+
+    for ax, values, grid, title in (
+        (axs[0], taus, NCA_TAU_GRID, "NCA temperature"),
+        (axs[1], betas, NCA_BETA_GRID, "NCA regularization")
+    ):
+
+        counts = [sum(np.isclose(v,g) for v in values) for g in grid]
+
+        ax.bar(range(len(grid)), counts, color="crimson")
+        ax.set_xticks(range(len(grid)), [str(g) for g in grid])
+        ax.set(xlabel="Selected value", ylabel="Outer folds / 25", title=title)
+        ax.spines[["top","right"]].set_visible(False)
+        ax.grid(axis="y", alpha=.15)
+
+    fig.tight_layout()
+    fig.savefig(FIG/f"{PREFIX}_nca_hyperparameters.png", dpi=220, bbox_inches="tight")
+    plt.close(fig)
+
+
+# ============================================================
+# 12. MAIN
 # ============================================================
 
 def main():
@@ -691,7 +849,8 @@ def main():
     assert n == 1422 and len(np.unique(y)) == 20
 
     print(f"Train={n} | Dim={DIM} | Outer={REPEATS}x{OUTER} | Inner={INNER}")
-    print(f"Models={MODELS}", flush=True)
+    print(f"Models={MODELS}")
+    print("Extracting R5 symbolic features...", flush=True)
 
     features = extract(X)
 
@@ -702,50 +861,64 @@ def main():
 
     preds = {name: np.empty((REPEATS,n), dtype=y.dtype) for name in MODELS}
     params = {name: [] for name in MODELS}
+    nca_search = []
     seen = np.zeros((REPEATS,n), dtype=np.uint8)
 
     cv = RepeatedStratifiedKFold(n_splits=OUTER, n_repeats=REPEATS, random_state=SEED)
 
-    print("\n"+"="*90)
-    print("REPEATED NESTED TRAIN-ONLY CV")
-    print("="*90)
+    print("\n"+"="*95)
+    print("REPEATED NESTED TRAIN-ONLY CROSS-VALIDATION")
+    print("="*95)
 
     for step, (it,iv) in enumerate(cv.split(np.zeros(n), y)):
 
         r, fold = divmod(step, OUTER)
         seen[r,iv] += 1
 
-        selected, scores = inner_tune(D, y, it, seed=1000+step)
+        selected, candidates = inner_tune(D, y, it, seed=1000+step)
+        nca_search.append([list(v) for v in candidates])
+
         row = []
 
         for name in MODELS:
 
-            pred, factors, C, gamma, info = fit_predict(
+            pred, factors, C, gamma, inner_score, info = fit_predict(
                 D, y, it, iv, name, selected[name], seed=SEED+50000+step
             )
 
             preds[name][r,iv] = pred
 
-            weights = {
+            denominator = float(np.asarray(factors) @ GROUP_BASE_SUMS)
+
+            effective_weights = {
                 k: float(BASE[k]*factors[j])
                 for j,g in enumerate(GROUP_NAMES)
                 for k in GROUPS[g]
             }
 
+            normalized_weights = {
+                k: value/denominator
+                for k,value in effective_weights.items()
+            }
+
             params[name].append({
+                "repeat": int(r+1),
+                "fold": int(fold+1),
                 "factors": list(factors),
-                "weights": weights,
+                "weights": effective_weights,
+                "normalized_weights": normalized_weights,
                 "C": float(C),
                 "gamma": float(gamma),
-                "inner_macro_f1": float(scores[name]),
-                "triplet_info": info
+                "inner_macro_f1": float(inner_score),
+                "training_info": info
             })
 
             row.append(f"{name}: {int((pred != y[iv]).sum())}")
 
         print(
             f"Repeat {r+1}/{REPEATS} | Fold {fold+1}/{OUTER} | "
-            + " | ".join(row), flush=True
+            + " | ".join(row),
+            flush=True
         )
 
     assert np.all(seen == 1), "Incomplete out-of-fold predictions."
@@ -756,9 +929,9 @@ def main():
 
     report = {}
 
-    print("\n"+"="*90)
+    print("\n"+"="*95)
     print("AGGREGATED TRAIN-ONLY CV")
-    print("="*90)
+    print("="*95)
 
     for name in MODELS:
 
@@ -774,10 +947,23 @@ def main():
         }
 
         print(
-            f"{name} | Errors={errors} | "
+            f"{name:34s} | Errors={errors} | "
+            f"Mean={np.mean(errors):.2f} ± {np.std(errors,ddof=1):.2f} | "
             f"Acc={100*report[name]['accuracy']:.4f}% | "
             f"F1={report[name]['macro_f1']:.5f}"
         )
+
+    # --------------------------------------------------------
+    # NCA diagnostics.
+    # --------------------------------------------------------
+
+    nca_factors = np.asarray([v["factors"] for v in params[REG_NCA]])
+    nca_bounds = np.isclose(nca_factors, WEIGHT_BOUNDS[0], atol=1e-4) | np.isclose(nca_factors, WEIGHT_BOUNDS[1], atol=1e-4)
+
+    print("\nNCA FACTOR DIAGNOSTICS")
+    print(f"Mean factors: {np.round(nca_factors.mean(axis=0),3)}")
+    print(f"SD factors:   {np.round(nca_factors.std(axis=0,ddof=1),3)}")
+    print(f"At bounds:    {nca_bounds.sum(axis=0).tolist()} / {OUTER*REPEATS}")
 
     # --------------------------------------------------------
     # Figures.
@@ -785,55 +971,64 @@ def main():
 
     plot_error_figures(report)
 
-    corrections = {
-        REG_CV: plot_red_errors(y, preds, FIX, REG_CV, "adaptive_cv"),
-        REG_TRIPLET: plot_red_errors(y, preds, FIX, REG_TRIPLET, "contrastive")
-    }
+    corrections = {}
 
-    plot_factors(params, REG_CV, "adaptive_cv")
-    plot_factors(params, REG_TRIPLET, "contrastive")
+    for name, suffix in (
+        (REG_CV, "adaptive_cv"),
+        (REG_TRIPLET, "triplet"),
+        (REG_NCA, "nca")
+    ):
+
+        corrections[name] = plot_red_errors(y, preds, FIX, name, suffix)
+        plot_factors(params, name, suffix)
+
+    plot_nca_hyperparameters(params)
 
     # --------------------------------------------------------
-    # Save predictions.
+    # Save OOF predictions.
     # --------------------------------------------------------
 
     np.savez_compressed(
         OUT/f"{PREFIX}_oof.npz",
         y=y,
         pred_fixed=preds[FIX],
-        pred_adaptive_cv=preds[REG_CV],
-        pred_contrastive=preds[REG_TRIPLET]
+        pred_cv=preds[REG_CV],
+        pred_triplet=preds[REG_TRIPLET],
+        pred_nca=preds[REG_NCA]
     )
 
     # --------------------------------------------------------
-    # Save complete report.
+    # Save complete experiment.
     # --------------------------------------------------------
 
     output = {
         "dataset": "CharacterTrajectories",
         "official_test_used": False,
+        "seed": SEED,
         "dimension": DIM,
         "protocol": f"outer {REPEATS}x{OUTER}, inner {INNER}",
-        "seed": SEED,
-        "model_order": MODELS,
+        "feature_parameters": {"K": K, "H": H, "N": N, "NE": NE, "FT": FT, "FR": FR, "FS": FS, "FC": FC, "FE": FE},
         "groups": GROUPS,
         "base_weights": BASE,
         "C_grid": C_GRID,
         "gamma_grid": GAMMA_GRID,
-        "CV_factors": FACTORS,
-        "CV_penalty": CV_PENALTY,
-        "CV_passes": PASSES,
+        "adaptive_cv": {"factors": FACTORS, "penalty": CV_PENALTY, "passes": CV_PASSES},
         "triplet": {
-            "margin": TRIPLET_MARGIN,
-            "tau": TRIPLET_TAU,
-            "beta": TRIPLET_BETA,
-            "bounds": TRIPLET_BOUNDS,
+            "margin": TRIPLET_MARGIN, "tau": TRIPLET_TAU, "beta": TRIPLET_BETA,
             "anchors_per_class": TRIPLET_ANCHORS_PER_CLASS,
-            "triplets_per_anchor": TRIPLETS_PER_ANCHOR,
-            "hard_neg_k": HARD_NEG_K
+            "triplets_per_anchor": TRIPLETS_PER_ANCHOR, "hard_neg_k": HARD_NEG_K
         },
+        "nca": {
+            "tau_grid": NCA_TAU_GRID,
+            "beta_grid": NCA_BETA_GRID,
+            "anchors_per_class": NCA_ANCHORS_PER_CLASS,
+            "maxiter": NCA_MAXITER
+        },
+        "weight_bounds": WEIGHT_BOUNDS,
         "report": report,
         "parameters": params,
+        "nca_inner_search": nca_search,
+        "nca_bounds_per_group": nca_bounds.sum(axis=0).tolist(),
         "corrections": corrections
     }
 
@@ -842,7 +1037,15 @@ def main():
         encoding="utf-8"
     )
 
+    print("\n"+"="*95)
+    print("EXPERIMENT FINISHED")
+    print("="*95)
+
+    for name in MODELS:
+        print(f"{name} | Acc={100*report[name]['accuracy']:.4f}% | Errors={report[name]['errors']}")
+
     print(f"\nResults: {OUT/f'{PREFIX}_results.json'}")
+    print(f"Predictions: {OUT/f'{PREFIX}_oof.npz'}")
     print(f"Figures: {FIG}/{PREFIX}_*.png")
 
 
